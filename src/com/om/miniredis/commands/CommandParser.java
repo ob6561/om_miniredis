@@ -1,8 +1,10 @@
 package com.om.miniredis.commands;
 
 import com.om.miniredis.commands.impl.DelCommand;
+import com.om.miniredis.commands.impl.ExpireCommand;
 import com.om.miniredis.commands.impl.GetCommand;
 import com.om.miniredis.commands.impl.SetCommand;
+import com.om.miniredis.commands.impl.TtlCommand;
 
 public class CommandParser {
 
@@ -32,6 +34,24 @@ public class CommandParser {
                     throw new IllegalArgumentException("ERR usage: DEL key");
                 }
                 return new DelCommand(parts[1]);
+
+            case "EXPIRE":
+                if (parts.length < 3) {
+                    throw new IllegalArgumentException("ERR usage: EXPIRE key seconds");
+                }
+                long ttl;
+                try {
+                    ttl = Long.parseLong(parts[2]);
+                } catch (NumberFormatException e) {
+                    throw new IllegalArgumentException("ERR value is not an integer");
+                }
+                return new ExpireCommand(parts[1], ttl);
+
+            case "TTL":
+                if (parts.length < 2) {
+                    throw new IllegalArgumentException("ERR usage: TTL key");
+                }
+                return new TtlCommand(parts[1]);
 
             default:
                 throw new IllegalArgumentException("ERR unknown command '" + cmd + "'");
