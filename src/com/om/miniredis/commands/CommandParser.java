@@ -5,6 +5,8 @@ import com.om.miniredis.commands.impl.ExpireCommand;
 import com.om.miniredis.commands.impl.GetCommand;
 import com.om.miniredis.commands.impl.SetCommand;
 import com.om.miniredis.commands.impl.TtlCommand;
+import com.om.miniredis.commands.impl.KeysCommand;
+
 
 public class CommandParser {
 
@@ -52,6 +54,9 @@ public class CommandParser {
                     throw new IllegalArgumentException("ERR usage: TTL key");
                 }
                 return new TtlCommand(parts[1]);
+
+            case "KEYS":
+                return new KeysCommand();
 
             default:
                 throw new IllegalArgumentException("ERR unknown command '" + cmd + "'");

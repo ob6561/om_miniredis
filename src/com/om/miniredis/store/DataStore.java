@@ -51,6 +51,34 @@ public class DataStore {
         return expired.size();
     }
 
+    public synchronized java.util.List<SnapshotEntry> snapshot() {
+        java.util.List<SnapshotEntry> result = new java.util.ArrayList<>();
+        for (var e : cache.entriesLeastToMostRecent()) {
+            Long expiry = expiryManager.getExpiryMillis(e.getKey());
+            result.add(new SnapshotEntry(e.getKey(), e.getValue(), expiry != null ? expiry : -1));
+        }
+        return result;
+    }
+
+    public synchronized void restore(java.util.List<SnapshotEntry> entries) {
+        long now = System.currentTimeMillis();
+        for (SnapshotEntry e : entries) {
+            if (e.expiryMillis() != -1 && e.expiryMillis() <= now) continue; // expired while server was down
+            cache.put(e.key(), e.value());
+            if (e.expiryMillis() != -1) {
+                expiryManager.setExpiryAt(e.key(), e.expiryMillis());
+            }
+        }
+    }
+    public synchronized java.util.List<String> keys() {
+        purgeExpiredKeys();
+        java.util.List<String> result = new java.util.ArrayList<>();
+        for (var e : cache.entriesLeastToMostRecent()) {
+            result.add(e.getKey());
+        }
+        return result;
+    }
+
     private void purgeIfExpired(String key) {
         if (expiryManager.isExpired(key)) {
             cache.remove(key);

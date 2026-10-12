@@ -2,3 +2,5 @@
 out/
 *.class
 *.iml
+dump.mrdb
+dump.mrdb.tmp

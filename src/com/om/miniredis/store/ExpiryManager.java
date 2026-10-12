@@ -61,4 +61,13 @@ public class ExpiryManager {
         }
         return expired;
     }
+
+    public Long getExpiryMillis(String key) {
+        return currentExpiry.get(key);
+    }
+
+    public void setExpiryAt(String key, long expiryTimeMillis) {
+        currentExpiry.put(key, expiryTimeMillis);
+        heap.offer(new ExpiryEntry(key, expiryTimeMillis));
+    }
 }

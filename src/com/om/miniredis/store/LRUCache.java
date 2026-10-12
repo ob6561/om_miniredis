@@ -53,6 +53,16 @@ public class LRUCache {
         return map.containsKey(key);
     }
 
+    public java.util.List<java.util.Map.Entry<String, String>> entriesLeastToMostRecent() {
+        java.util.List<java.util.Map.Entry<String, String>> list = new java.util.ArrayList<>();
+        Node cur = tail.prev;
+        while (cur != head) {
+            list.add(new java.util.AbstractMap.SimpleEntry<>(cur.key, cur.value));
+            cur = cur.prev;
+        }
+        return list;
+    }
+
     private void addToFront(Node node) {
         node.next = head.next;
         node.prev = head;
