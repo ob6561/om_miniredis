@@ -13,35 +13,42 @@ public class DataStore {
         this.cache = new LRUCache(capacity);
     }
 
-    public void set(String key, String value) {
+    public synchronized void set(String key, String value) {
         cache.put(key, value);
-        expiryManager.clearExpiry(key); // a fresh SET clears any old TTL, like real Redis
+        expiryManager.clearExpiry(key);
     }
 
-    public String get(String key) {
+    public synchronized String get(String key) {
         purgeIfExpired(key);
         return cache.get(key);
     }
 
-    public boolean delete(String key) {
+    public synchronized boolean delete(String key) {
         expiryManager.clearExpiry(key);
         return cache.remove(key);
     }
 
-    public boolean exists(String key) {
+    public synchronized boolean exists(String key) {
         purgeIfExpired(key);
         return cache.containsKey(key);
     }
 
-    public boolean expire(String key, long ttlSeconds) {
+    public synchronized boolean expire(String key, long ttlSeconds) {
         if (!cache.containsKey(key)) return false;
         expiryManager.setExpiry(key, ttlSeconds);
         return true;
     }
 
-    public Long ttl(String key) {
+    public synchronized Long ttl(String key) {
         if (!cache.containsKey(key)) return null;
         return expiryManager.getTtlSeconds(key);
+    }
+    public synchronized int purgeExpiredKeys() {
+        java.util.List<String> expired = expiryManager.pollExpiredKeys();
+        for (String key : expired) {
+            cache.remove(key);
+        }
+        return expired.size();
     }
 
     private void purgeIfExpired(String key) {

@@ -1,32 +1,27 @@
 package com.om.miniredis;
 
-import com.om.miniredis.commands.Command;
-import com.om.miniredis.commands.CommandParser;
+import com.om.miniredis.server.Server;
 import com.om.miniredis.store.DataStore;
-import java.util.Scanner;
+
+import java.io.IOException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         DataStore store = new DataStore();
-        Scanner scanner = new Scanner(System.in);
 
-        System.out.println("Mini-Redis CLI. Commands: SET key value | GET key | DEL key | EXIT");
+        ScheduledExecutorService sweeper = Executors.newSingleThreadScheduledExecutor(r -> {
+            Thread t = new Thread(r, "expiry-sweeper");
+            t.setDaemon(true); // won't keep the JVM alive on shutdown
+            return t;
+        });
+        sweeper.scheduleAtFixedRate(() -> {
+            int n = store.purgeExpiredKeys();
+            if (n > 0) System.out.println("Sweeper purged " + n + " expired key(s)");
+        }, 1, 1, TimeUnit.SECONDS);
 
-        while (true) {
-            System.out.print("> ");
-            String line = scanner.nextLine().trim();
-            if (line.isEmpty()) continue;
-            if (line.equalsIgnoreCase("EXIT")) {
-                System.out.println("Bye.");
-                return;
-            }
-
-            try {
-                Command command = CommandParser.parse(line);
-                System.out.println(command.execute(store));
-            } catch (IllegalArgumentException e) {
-                System.out.println(e.getMessage());
-            }
-        }
+        new Server(6379, store).start();
     }
 }
